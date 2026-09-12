@@ -31,6 +31,8 @@ pis update <name>         # update a package to the latest repo version
 pis update --all          # update every installed package
 pis info <name>           # show a package's manifest details from the repo
 pis build <name>          # build a package zip + update index.json (run in repo root)
+pis init <name>           # scaffold a new package folder + pis.toml + build
+pis run <pkg> <script>    # run a script declared in an installed package
 pis --version
 ```
 
@@ -54,12 +56,16 @@ no rate limits**. Each package folder contains a pre-built `<name>.zip`:
 ```
 ~/.pis/
   packages/        <- installed package folders
+  bin/             <- script wrappers for entry points
   installed.json   <- registry of installed packages + metadata
 ```
 
 A `pis.pth` file is also dropped into the user's site-packages so installed
 packages become importable from any Python session. If that fails (permissions),
 add `~/.pis/packages` to your `PYTHONPATH` manually.
+
+Script wrappers are written to `~/.pis/bin/` — add it to your PATH to run
+declared scripts directly.
 
 ## Package format
 
@@ -75,10 +81,15 @@ dependencies = []
 # Optional: verify file integrity after install
 [checksums]
 "hello.py" = "sha256hex..."
+
+# Optional: declare runnable scripts (entry points)
+[scripts]
+greet = "hello:main"
 ```
 
 Plus whatever Python files make up the package, and a pre-built `<name>.zip`
-(created by `pis build <name>`).
+(created by `pis build <name>`). Use `pis init <name>` to scaffold a new
+package with all the boilerplate.
 
 ## Requirements
 

@@ -15,6 +15,7 @@ import hashlib
 import io
 import json
 import sys
+import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -33,12 +34,23 @@ class FetchError(Exception):
     """Raised when a file can't be downloaded or read."""
 
 
+class NotFoundError(FetchError):
+    """Raised when a file returns 404 (package not found in repo)."""
+
+
+class NetworkError(FetchError):
+    """Raised when a download fails due to network issues."""
+
+
 # Progress callback type: (bytes_downloaded, total_bytes_or_None) -> None
 ProgressFn = Callable[[int, int | None], None]
 
 
 def _download(url: str, progress: ProgressFn | None = None) -> bytes:
-    """Download *url* and return bytes. Calls *progress* if given."""
+    """Download *url* and return bytes. Calls *progress* if given.
+
+    Raises NotFoundError on 404, NetworkError on connection failures.
+    """
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
@@ -55,8 +67,14 @@ def _download(url: str, progress: ProgressFn | None = None) -> bytes:
                 if progress:
                     progress(downloaded, total_int)
             return buf.getvalue()
-    except Exception as exc:
-        raise FetchError(f"could not download {url}: {exc}") from exc
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            raise NotFoundError(f"not found: {url}") from exc
+        raise NetworkError(f"HTTP {exc.code} from {url}") from exc
+    except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+        raise NetworkError(
+            f"could not reach {url} (check your connection): {exc}"
+        ) from exc
 
 
 def _print_progress(downloaded: int, total: int | None) -> None:

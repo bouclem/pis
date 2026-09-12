@@ -3,6 +3,7 @@
 All filesystem state lives under PIS_HOME (~/.pis on every OS):
   ~/.pis/
     packages/         <- installed package folders live here
+    bin/              <- script wrappers for entry points
     installed.json    <- registry of installed packages + metadata
     pis.pth           <- (copied to user site-packages) makes packages importable
 """
@@ -43,6 +44,7 @@ RAW_INDEX_URL = f"{RAW_BASE}/{PACKAGES_SUBDIR}/index.json"
 # --- Local filesystem -------------------------------------------------------
 PIS_HOME = Path(os.getenv("PIS_HOME", Path.home() / ".pis"))
 PACKAGES_DIR = PIS_HOME / "packages"
+BIN_DIR = PIS_HOME / "bin"
 REGISTRY_FILE = PIS_HOME / "installed.json"
 
 # Name of the .pth file we drop into the user's site-packages so that
@@ -50,12 +52,13 @@ REGISTRY_FILE = PIS_HOME / "installed.json"
 PTH_NAME = "pis.pth"
 
 # User-agent sent with GitHub requests (GitHub asks for one).
-USER_AGENT = "pis/0.0.3 (+https://github.com/bouclem/pis)"
+USER_AGENT = "pis/0.0.4 (+https://github.com/bouclem/pis)"
 
 
 def ensure_dirs() -> None:
-    """Create PIS_HOME and PACKAGES_DIR if they don't exist yet."""
+    """Create PIS_HOME, PACKAGES_DIR, and BIN_DIR if they don't exist yet."""
     PACKAGES_DIR.mkdir(parents=True, exist_ok=True)
+    BIN_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def registry_path() -> Path:

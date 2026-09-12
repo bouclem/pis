@@ -37,3 +37,16 @@ Add an entry whenever you learn something new.
   Useful for remote manifests fetched as text — no temp file needed.
 - `index.json` is simpler than an API call for listing available packages.
   The build command maintains it automatically so it can't drift.
+
+## 2026-09-12 — v0.0.4 (init, error handling, entry points)
+- `urllib.error.HTTPError` has a `.code` attribute — check for 404 to
+  distinguish "not found" from network failures. `URLError` and
+  `ConnectionError` cover the network side. Catching these separately lets
+  the CLI print friendly messages instead of raw tracebacks.
+- For entry points, `__import__(module, fromlist=[func])` is the stdlib way
+  to import a module and get an attribute from it. `importlib.import_module`
+  works too but `__import__` is simpler for this use case.
+- Script wrappers need platform-specific files: `.bat` for Windows,
+  extensionless executable for Unix. Writing both is cheap and covers both.
+- `pis init` + `pis build` chained together makes scaffolding a new package
+  a one-command operation. Good DX for a package manager.

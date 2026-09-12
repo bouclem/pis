@@ -21,15 +21,19 @@
 - [x] `pis build <name>` — build zip + update index.json
 - [x] `packages/index.json` for search (no API)
 
-## v0.0.4 (next)
-- [ ] handle GitHub raw fetch errors (404, network) with friendly messages
-- [ ] `pis init <name>` — scaffold a new package folder + pis.toml
-- [ ] entry points / console scripts (like [project.scripts])
+## v0.0.4 (done)
+- [x] `pis init <name>` — scaffold a new package folder + pis.toml
+- [x] friendly error handling (404, network) instead of raw tracebacks
+- [x] entry points / `[scripts]` table in pis.toml
+- [x] `pis run <pkg> <script>` — execute declared scripts
+- [x] script wrappers in ~/.pis/bin/ after install
+
+## v0.0.5 (next)
 - [ ] custom repo support (multiple sources, not just bouclem/pis)
 - [ ] version constraints in dependencies (e.g. "foo>=1.0")
 - [ ] offline cache of downloaded zips
+- [ ] `pis doctor` — diagnose install / pth / path issues
 
 ## Maybe / fun
 - [ ] `pis shitlist` — easter egg command
 - [ ] colorful output (ANSI, with --no-color flag)
-- [ ] `pis doctor` — diagnose install / pth / path issues

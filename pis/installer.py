@@ -19,7 +19,7 @@ import site
 import sys
 from pathlib import Path
 
-from pis.config import PACKAGES_DIR, REGISTRY_FILE, ensure_dirs, PTH_NAME
+from pis.config import BIN_DIR, PACKAGES_DIR, REGISTRY_FILE, ensure_dirs, PTH_NAME
 from pis.github import FetchError, fetch_package_zip, verify_checksums
 from pis.manifest import ManifestError, load_manifest
 
@@ -146,12 +146,59 @@ def install(
         "version": manifest["version"],
         "description": manifest["description"],
         "dependencies": manifest["dependencies"],
+        "scripts": manifest.get("scripts", {}),
     }
     _save_registry(reg)
     _ensure_pth()
+    _write_script_wrappers(name, manifest.get("scripts", {}))
 
     print(f"  installed {name}=={manifest['version']}")
     return True
+
+
+# --- script wrappers --------------------------------------------------------
+
+def _write_script_wrappers(pkg_name: str, scripts: dict[str, str]) -> None:
+    """Write executable wrappers for declared [scripts] into ~/.pis/bin/.
+
+    Each script is a small .py file that imports the package and calls the
+    target function. On Windows, a .bat wrapper is also created.
+    """
+    if not scripts:
+        return
+    BIN_DIR.mkdir(parents=True, exist_ok=True)
+    for script_name, target in scripts.items():
+        # target format: "module:function"
+        if ":" not in target:
+            print(f"  ! invalid script '{script_name}': {target} (expected module:function)")
+            continue
+        module, func = target.split(":", 1)
+        py_wrapper = BIN_DIR / f"{script_name}.py"
+        py_content = (
+            f"import sys\n"
+            f"from {module} import {func}\n"
+            f"sys.exit({func}())\n"
+        )
+        py_wrapper.write_text(py_content, encoding="utf-8")
+
+        # .bat wrapper for Windows
+        bat_wrapper = BIN_DIR / f"{script_name}.bat"
+        bat_content = (
+            f"@echo off\n"
+            f'python "{py_wrapper}" %*\n'
+        )
+        bat_wrapper.write_text(bat_content, encoding="utf-8")
+
+        # .sh wrapper for Unix
+        sh_wrapper = BIN_DIR / script_name
+        sh_content = (
+            f"#!/bin/sh\n"
+            f'exec python "{py_wrapper}" "$@"\n'
+        )
+        sh_wrapper.write_text(sh_content, encoding="utf-8")
+
+        print(f"  script: {script_name} -> {target}")
+    print(f"  ! add {BIN_DIR} to your PATH to run scripts directly")
 
 
 def _rm_tree(path: Path) -> None:

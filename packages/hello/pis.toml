@@ -3,3 +3,6 @@ name = "hello"
 version = "0.1.0"
 description = "a tiny sample pis package that says hi"
 dependencies = []
+
+[scripts]
+greet = "hello:main"

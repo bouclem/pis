@@ -31,4 +31,11 @@ def info(name: str) -> int:
         print(f"  checksums:     {len(checksums)} file(s) verified")
     else:
         print(f"  checksums:     (none)")
+    scripts = manifest.get("scripts", {})
+    if scripts:
+        print(f"  scripts:")
+        for sname, target in scripts.items():
+            print(f"    {sname:<16} -> {target}")
+    else:
+        print(f"  scripts:       (none)")
     return 0

@@ -11,6 +11,10 @@ Optional [checksums] table (filename -> sha256 hex):
     [checksums]
     "hello.py" = "abc123..."
 
+Optional [scripts] table (script name -> "module:function"):
+    [scripts]
+    greet = "hello:main"
+
 Unknown keys are ignored (forward-compatible). Missing required keys raise
 ManifestError with a clear message.
 """
@@ -60,6 +64,7 @@ def _parse_toml_data(data: dict, source: str) -> dict[str, Any]:
         "description": str(table.get("description", "")),
         "dependencies": list(table.get("dependencies", [])),
         "checksums": dict(data.get("checksums", {})),
+        "scripts": dict(data.get("scripts", {})),
     }
 
 
