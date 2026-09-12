@@ -1,6 +1,7 @@
 {
   "packages": [
     "girlfriend",
-    "hello"
+    "hello",
+    "trans"
   ]
 }

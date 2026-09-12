@@ -1,0 +1,19 @@
+[package]
+name = "trans"
+version = "0.1.0"
+description = "a troll package about transitioning. mostly fake errors."
+dependencies = []
+
+[scripts]
+mtf = "trans:mtf"
+ftm = "trans:ftm"
+status = "trans:status"
+cancel = "trans:cancel"
+stealth = "trans:stealth"
+family = "trans:family"
+egg = "trans:egg"
+reveal = "trans:reveal"
+detransition = "trans:detransition"
+speedrun = "trans:speedrun"
+rizz = "trans:rizz"
+doctor = "trans:doctor"
