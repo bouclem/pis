@@ -54,7 +54,7 @@ REGISTRY_FILE = PIS_HOME / "installed.json"
 PTH_NAME = "pis.pth"
 
 # User-agent sent with GitHub requests (GitHub asks for one).
-USER_AGENT = "pis/0.0.5 (+https://github.com/bouclem/pis)"
+USER_AGENT = "pis/0.0.6 (+https://github.com/bouclem/pis)"
 
 
 def ensure_dirs() -> None:

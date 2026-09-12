@@ -30,11 +30,12 @@ pis/
   uninstaller.py remove package + registry entry
   lister.py      print installed packages table
   searcher.py    search packages/ via index.json (raw URL)
-  updater.py     compare installed vs repo version, reinstall if newer
+  updater.py     compare installed vs repo version, reinstall if newer; self-update
   info.py        show a package's manifest + changelog from the repo
   builder.py     build per-package zip + update index.json
   initer.py      scaffold a new package folder + pis.toml + build
-  cli.py        argparse dispatch (install/uninstall/list/search/update/info/build/init/run/cache)
+  doctor.py      diagnose install / pth / path / bin issues
+  cli.py        argparse dispatch (install/uninstall/list/search/update/info/build/init/run/cache/doctor)
   __main__.py   `python -m pis` entry
 packages/
   index.json      list of available package names
@@ -44,7 +45,7 @@ packages/
 ## Install flow
 
 1. `ensure_dirs()` creates `~/.pis/packages/`, `~/.pis/bin/`, `~/.pis/cache/`.
-2. `fetch_package_zip(name)` checks cache first, then downloads
+2. `fetch_package_zip(name)` checks cache first (or offline-only), then downloads
    `packages/<name>/<name>.zip` via raw URL and extracts to staging.
 3. `load_manifest()` reads + validates `pis.toml`.
 4. `verify_checksums()` checks sha256 of listed files if `[checksums]` present.
@@ -54,6 +55,14 @@ packages/
 8. Registry (`~/.pis/installed.json`) updated with metadata + scripts.
 9. `pis.pth` written to user site-packages (best-effort) for importability.
 10. Script wrappers written to `~/.pis/bin/` for declared `[scripts]`.
+
+## Update flow
+
+- `pis update <name>` — update one package (fetch manifest, compare version, reinstall if newer).
+- `pis update --all` — update all installed packages only.
+- `pis update` (no args) — update all installed packages AND pis itself
+  (checks repo pyproject.toml for newer pis version, self-updates via pip).
+- `--offline` — use cache only, never download.
 
 ## Build flow (for package authors)
 
@@ -76,4 +85,5 @@ if the package is installed locally.
 - v0.0.3: no-API fetch (raw URLs), per-package zips, info, checksums, build.
 - v0.0.4: init, entry points (scripts), friendly error handling.
 - v0.0.5: version constraints, offline cache, colorful output, per-package changelogs.
-- Future (see TODO.md): custom repos, doctor, offline mode.
+- v0.0.6: doctor, offline mode, self-update.
+- Future (see TODO.md): custom repos, tests, easter eggs.

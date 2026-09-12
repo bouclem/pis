@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pis"
-version = "0.0.5"
+version = "0.0.6"
 description = "Python Install Shit — a tiny pip alternative with an in-repo package store."
 readme = "docs/README.md"
 requires-python = ">=3.11"

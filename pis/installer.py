@@ -78,6 +78,7 @@ def install(
     progress: bool = False,
     use_cache: bool = True,
     parent_dep: Dependency | None = None,
+    offline: bool = False,
 ) -> bool:
     """Install *name* from the repo. Returns True if installed, False if
     skipped (already present at same version and not forced).
@@ -88,6 +89,7 @@ def install(
     *use_cache* uses cached zips when available.
     *parent_dep* is the Dependency object from the parent's manifest (for
     version constraint checking).
+    *offline* uses cache only, never downloads.
     """
     if _seen is None:
         _seen = set()
@@ -120,6 +122,7 @@ def install(
             progress=progress,
             use_cache=use_cache,
             cached_version=None,  # don't know version yet
+            offline=offline,
         )
     except FetchError as exc:
         _rm_tree(staging)
@@ -169,6 +172,7 @@ def install(
                 progress=progress,
                 use_cache=use_cache,
                 parent_dep=dep,
+                offline=offline,
             )
             reg = _load_registry()
 

@@ -33,11 +33,15 @@
 - [x] colorful output (ANSI, `--no-color` flag)
 - [x] per-package CHANGELOG.md (independent of pis changelog)
 
-## v0.0.6 (next)
+## v0.0.6 (done)
+- [x] `pis doctor` — diagnose install / pth / path / bin issues
+- [x] `pis install --offline` / `pis update --offline` — cache only
+- [x] `pis update` (no args) updates all packages + pis itself
+
+## v0.0.7 (next)
 - [ ] custom repo support (multiple sources, not just bouclem/pis)
-- [ ] `pis doctor` — diagnose install / pth / path / bin issues
-- [ ] offline mode (use cache only, never download)
+- [ ] `pis shitlist` — easter egg command
+- [ ] tests (pytest suite)
 
 ## Maybe / fun
 - [ ] `pis shitlist` — easter egg command
-- [ ] `pis doctor` — diagnose install / pth / path issues

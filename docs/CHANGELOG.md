@@ -3,6 +3,17 @@
 All notable changes to the pis package manager. Dates in YYYY-MM-DD.
 Package-specific changes are tracked in each package's own CHANGELOG.md.
 
+## 0.0.6 — 2026-09-12
+- `pis doctor` — diagnose install / pth / path / bin issues. Checks: dirs
+  exist, registry is valid, pis.pth points to right path, ~/.pis/bin on PATH,
+  installed packages exist on disk. Reports OK/WARN/FAIL with suggestions.
+- `pis install --offline` / `pis update --offline` — use cache only, never
+  download. Errors with a clear message if not cached.
+- `pis update` (no args) now updates all installed packages AND pis itself.
+  Checks the repo's pyproject.toml for a newer pis version and self-updates
+  via `pip install --upgrade git+...`. Use `pis update --all` for packages only.
+- New file: `pis/doctor.py`.
+
 ## 0.0.5 — 2026-09-12
 - Version constraints in dependencies: `dependencies = ["foo>=1.0,<2.0"]`.
   Supports `>=`, `<=`, `==`, `>`, `<`, `!=`, comma-separated. pis checks

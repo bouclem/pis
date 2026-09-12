@@ -65,3 +65,14 @@ Add an entry whenever you learn something new.
 - Storing dependencies in the registry as formatted strings (e.g.
   `"foo>=1.0"`) is simpler than serializing Dependency objects. Parse on
   use, store as string.
+
+## 2026-09-12 — v0.0.6 (doctor, offline, self-update)
+- `pis doctor` is cheap to write and high value — just check each thing
+  that could be wrong and report OK/WARN/FAIL. Users love diagnostics.
+- Offline mode is just "cache only, raise if not cached" — one bool flag
+  threaded through the fetch path. No separate code path needed.
+- Self-update via `pip install --upgrade git+URL` is the simplest approach
+  for a pip-installed tool. No need to reinvent package management for
+  the manager itself.
+- `pis update` with no args doing "everything" (all packages + self) is
+  better UX than erroring. `--all` is for when you want packages only.

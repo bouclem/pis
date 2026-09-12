@@ -102,6 +102,7 @@ def fetch_package_zip(
     progress: bool = False,
     use_cache: bool = True,
     cached_version: str | None = None,
+    offline: bool = False,
 ) -> Path:
     """Download <name>.zip from the repo and extract it into *dest*.
 
@@ -112,8 +113,11 @@ def fetch_package_zip(
     If *use_cache* is True and *cached_version* is given, checks the cache
     first. If a cached zip exists for that version, uses it instead of
     downloading. After a successful download, the zip is stored in the cache.
+
+    If *offline* is True, never download — only use cache. Raises FetchError
+    if not cached.
     """
-    data = _fetch_zip_bytes(name, progress, use_cache, cached_version)
+    data = _fetch_zip_bytes(name, progress, use_cache, cached_version, offline)
     return _extract_zip_bytes(name, data, dest)
 
 
@@ -122,6 +126,7 @@ def _fetch_zip_bytes(
     progress: bool = False,
     use_cache: bool = True,
     cached_version: str | None = None,
+    offline: bool = False,
 ) -> bytes:
     """Fetch zip bytes for *name*, using cache if available."""
     # check cache first
@@ -130,6 +135,12 @@ def _fetch_zip_bytes(
         if cached:
             print(f"  using cached {name}-{cached_version}.zip")
             return cached.read_bytes()
+
+    # offline mode: cache only, never download
+    if offline:
+        raise FetchError(
+            f"'{name}' not in cache and offline mode is on"
+        )
 
     # download
     url = raw_package_zip_url(name)

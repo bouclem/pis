@@ -9,6 +9,7 @@ Track project metrics over time. Compare to previous state, flag regressions.
 | 2026-09-12 | 0.0.3   | 13           | ~720      | 0     | 0    | 1 (hello)         |
 | 2026-09-12 | 0.0.4   | 15           | ~900      | 0     | 0    | 1 (hello)         |
 | 2026-09-12 | 0.0.5   | 18           | ~1100     | 0     | 0    | 1 (hello)         |
+| 2026-09-12 | 0.0.6   | 19           | ~1300     | 0     | 0    | 1 (hello)         |
 
 ## Notes
 - LOC measured as source lines in `pis/` (excluding `packages/` and docs).
@@ -21,4 +22,6 @@ Track project metrics over time. Compare to previous state, flag regressions.
   installer.py grew (script wrappers); github.py (NotFoundError, NetworkError).
 - v0.0.5 added: colors.py, constraints.py, cacher.py; installer.py grew (cache,
   constraints); cli.py grew (cache subcommand, --no-color).
-- Tests: none yet — see TODO.md (add pytest suite for v0.0.6).
+- v0.0.6 added: doctor.py; updater.py grew (self-update, offline); cli.py grew
+  (doctor, --offline, update no-args = all + self).
+- Tests: none yet — see TODO.md (add pytest suite for v0.0.7).

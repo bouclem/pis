@@ -1,16 +1,17 @@
 """pis command-line interface.
 
 Usage:
-    pis install <name> [--force] [--progress] [--no-cache]
+    pis install <name> [--force] [--progress] [--no-cache] [--offline]
     pis uninstall <name>
     pis list
     pis search [query]
-    pis update [name] [--all] [--force]
+    pis update [name] [--all] [--force] [--offline]
     pis info <name>
     pis build <name>
     pis init <name> [--description <desc>] [--no-build]
     pis run <pkg> <script>
     pis cache list|clear [name]
+    pis doctor
     pis --version [--no-color]
 """
 
@@ -24,6 +25,7 @@ from pis import __version__, colors
 from pis.builder import BuildError, build
 from pis.cacher import clear_cache, list_cache
 from pis.config import REGISTRY_FILE
+from pis.doctor import DoctorError, doctor
 from pis.github import FetchError, NetworkError, NotFoundError
 from pis.info import InfoError, info
 from pis.initer import InitError, init
@@ -31,7 +33,7 @@ from pis.installer import InstallError, install
 from pis.lister import list_installed
 from pis.searcher import SearchError, search
 from pis.uninstaller import UninstallError, uninstall
-from pis.updater import UpdateError, update, update_all
+from pis.updater import UpdateError, update, update_all, update_default
 
 
 class RunError(Exception):
@@ -101,6 +103,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="show a download progress bar")
     p_install.add_argument("--no-cache", action="store_true",
         help="skip cache and always download")
+    p_install.add_argument("--offline", action="store_true",
+        help="use cache only, never download")
 
     # uninstall
     p_uninstall = sub.add_parser("uninstall", help="remove an installed package")
@@ -116,13 +120,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     # update
     p_update = sub.add_parser("update",
-        help="update a package (or all) to the latest repo version")
+        help="update a package, all packages, or pis itself")
     p_update.add_argument("name", nargs="?",
-        help="package name (omit with --all for everything)")
+        help="package name (omit to update all + pis itself)")
     p_update.add_argument("-a", "--all", action="store_true",
-        help="update all installed packages")
+        help="update all installed packages only")
     p_update.add_argument("-f", "--force", action="store_true",
         help="reinstall even if the version is unchanged")
+    p_update.add_argument("--offline", action="store_true",
+        help="use cache only, never download")
 
     # info
     p_info = sub.add_parser("info",
@@ -153,6 +159,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_cache_clear = p_cache_sub.add_parser("clear", help="clear cache")
     p_cache_clear.add_argument("name", nargs="?", help="only clear cache for this package")
 
+    # doctor
+    sub.add_parser("doctor", help="diagnose install / pth / path / bin issues")
+
     return parser
 
 
@@ -166,7 +175,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "install":
             install(args.name, force=args.force, progress=args.progress,
-                    use_cache=not args.no_cache)
+                    use_cache=not args.no_cache, offline=args.offline)
         elif args.command == "uninstall":
             uninstall(args.name)
         elif args.command == "list":
@@ -175,11 +184,12 @@ def main(argv: list[str] | None = None) -> int:
             search(args.query)
         elif args.command == "update":
             if args.all:
-                update_all()
+                update_all(offline=args.offline)
             elif args.name:
-                update(args.name, force=args.force)
+                update(args.name, force=args.force, offline=args.offline)
             else:
-                parser.error("update requires a package name or --all")
+                # no args: update all packages + pis itself
+                update_default(offline=args.offline)
         elif args.command == "info":
             info(args.name)
         elif args.command == "build":
@@ -193,6 +203,8 @@ def main(argv: list[str] | None = None) -> int:
                 _cache_list()
             elif args.cache_cmd == "clear":
                 _cache_clear(getattr(args, "name", None))
+        elif args.command == "doctor":
+            return doctor()
         else:
             parser.print_help()
             return 1
@@ -220,6 +232,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     except RunError as exc:
         _print_error("run", exc)
+        return 1
+    except DoctorError as exc:
+        _print_error("doctor", exc)
         return 1
     except KeyboardInterrupt:
         print("\npis: interrupted", file=sys.stderr)

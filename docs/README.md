@@ -25,17 +25,21 @@ pis install <name>        # fetch & install a package from the repo
 pis install <name> -f     # force reinstall even if version matches
 pis install <name> -p     # show a download progress bar
 pis install <name> --no-cache  # skip cache, always download
+pis install <name> --offline   # use cache only, never download
 pis uninstall <name>      # remove an installed package
 pis list                  # list installed packages
 pis search [query]        # list available packages in the repo (substring filter)
-pis update <name>         # update a package to the latest repo version
-pis update --all          # update every installed package
+pis update                # update all packages + pis itself
+pis update <name>         # update a single package
+pis update --all          # update all installed packages only
+pis update --offline      # update using cache only
 pis info <name>           # show a package's manifest details from the repo
 pis build <name>          # build a package zip + update index.json (run in repo root)
 pis init <name>           # scaffold a new package folder + pis.toml + build
 pis run <pkg> <script>    # run a script declared in an installed package
 pis cache list            # list cached zips
 pis cache clear [name]    # clear cache (optionally for one package)
+pis doctor                # diagnose install / pth / path / bin issues
 pis --version
 pis --no-color            # disable colored output
 ```
