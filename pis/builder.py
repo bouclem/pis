@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 import zipfile
 
+from pis import colors
 from pis.config import PACKAGES_SUBDIR
 from pis.manifest import ManifestError, load_manifest
 
@@ -76,7 +77,7 @@ def build(name: str, repo_root: Path | None = None) -> Path:
         for f in files:
             rel = f.relative_to(pkg_dir).as_posix()
             zf.write(f, arcname=rel)
-    print(f"  built {zip_path} ({len(files)} file(s))")
+    print(colors.success(f"  built {zip_path} ({len(files)} file(s))"))
 
     # update index.json
     _update_index(repo_root, name)

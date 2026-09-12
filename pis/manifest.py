@@ -5,7 +5,8 @@ A pis.toml is intentionally tiny. Recognized keys (under [package]):
     name        = "hello"            # required, package name
     version     = "0.1.0"            # required
     description = "a fun package"    # optional
-    dependencies = ["foo", "bar"]     # optional, list of pis package names
+    dependencies = ["foo", "bar>=1.0"]  # optional, pis package names
+                                         # with optional version constraints
 
 Optional [checksums] table (filename -> sha256 hex):
     [checksums]
@@ -23,6 +24,8 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+
+from pis.constraints import Dependency, parse_dependency
 
 try:  # Python 3.11+
     import tomllib  # type: ignore
@@ -58,11 +61,17 @@ def _parse_toml_data(data: dict, source: str) -> dict[str, Any]:
             f"{source} is missing required key(s): {', '.join(missing)}"
         )
 
+    # parse dependencies into Dependency objects (with version constraints)
+    raw_deps = list(table.get("dependencies", []))
+    deps: list[Dependency] = []
+    for d in raw_deps:
+        deps.append(parse_dependency(d))
+
     return {
         "name": str(table["name"]),
         "version": str(table["version"]),
         "description": str(table.get("description", "")),
-        "dependencies": list(table.get("dependencies", [])),
+        "dependencies": deps,
         "checksums": dict(data.get("checksums", {})),
         "scripts": dict(data.get("scripts", {})),
     }

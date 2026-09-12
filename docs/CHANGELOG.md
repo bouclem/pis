@@ -1,6 +1,23 @@
 # CHANGELOG — pis
 
-All notable changes to pis. Dates in YYYY-MM-DD.
+All notable changes to the pis package manager. Dates in YYYY-MM-DD.
+Package-specific changes are tracked in each package's own CHANGELOG.md.
+
+## 0.0.5 — 2026-09-12
+- Version constraints in dependencies: `dependencies = ["foo>=1.0,<2.0"]`.
+  Supports `>=`, `<=`, `==`, `>`, `<`, `!=`, comma-separated. pis checks
+  installed and fetched versions against constraints, aborts on mismatch.
+- Offline cache: downloaded zips cached in `~/.pis/cache/<name>-<version>.zip`.
+  `pis install` uses cache automatically; `--no-cache` forces re-download.
+  New `pis cache list` / `pis cache clear [name]` commands.
+- Colorful output: ANSI colors for success/error/info/warning messages.
+  Auto-detects terminal support; `--no-color` flag or `NO_COLOR` env var
+  disables. New `pis/colors.py` module.
+- Per-package CHANGELOG.md: each package can have its own `CHANGELOG.md`,
+  included in the zip by `pis build`. `pis info` shows it if installed locally.
+- Dependencies in manifest now parsed as `Dependency` objects with constraints.
+  Registry stores them as formatted strings (e.g. `"foo>=1.0"`).
+- New files: `pis/colors.py`, `pis/constraints.py`, `pis/cacher.py`.
 
 ## 0.0.4 — 2026-09-12
 - `pis init <name> [--description] [--no-build]` — scaffold a new package

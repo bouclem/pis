@@ -24,6 +24,7 @@ python -m pis --help
 pis install <name>        # fetch & install a package from the repo
 pis install <name> -f     # force reinstall even if version matches
 pis install <name> -p     # show a download progress bar
+pis install <name> --no-cache  # skip cache, always download
 pis uninstall <name>      # remove an installed package
 pis list                  # list installed packages
 pis search [query]        # list available packages in the repo (substring filter)
@@ -33,7 +34,10 @@ pis info <name>           # show a package's manifest details from the repo
 pis build <name>          # build a package zip + update index.json (run in repo root)
 pis init <name>           # scaffold a new package folder + pis.toml + build
 pis run <pkg> <script>    # run a script declared in an installed package
+pis cache list            # list cached zips
+pis cache clear [name]    # clear cache (optionally for one package)
 pis --version
+pis --no-color            # disable colored output
 ```
 
 ## How install works (no GitHub API)
@@ -57,6 +61,7 @@ no rate limits**. Each package folder contains a pre-built `<name>.zip`:
 ~/.pis/
   packages/        <- installed package folders
   bin/             <- script wrappers for entry points
+  cache/           <- cached downloaded zips
   installed.json   <- registry of installed packages + metadata
 ```
 
@@ -76,7 +81,7 @@ Each package is a folder under `packages/<name>/` containing a `pis.toml`:
 name = "hello"
 version = "0.1.0"
 description = "a tiny sample pis package"
-dependencies = []
+dependencies = ["foo>=1.0,<2.0"]  # optional version constraints
 
 # Optional: verify file integrity after install
 [checksums]
@@ -87,9 +92,10 @@ dependencies = []
 greet = "hello:main"
 ```
 
-Plus whatever Python files make up the package, and a pre-built `<name>.zip`
-(created by `pis build <name>`). Use `pis init <name>` to scaffold a new
-package with all the boilerplate.
+Plus whatever Python files make up the package, a `CHANGELOG.md` for the
+package's own history, and a pre-built `<name>.zip` (created by
+`pis build <name>`). Use `pis init <name>` to scaffold a new package with
+all the boilerplate.
 
 ## Requirements
 

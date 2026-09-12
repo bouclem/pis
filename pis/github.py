@@ -28,6 +28,7 @@ from pis.config import (
     raw_manifest_url,
     raw_package_zip_url,
 )
+from pis.cacher import get_cached, set_cached
 
 
 class FetchError(Exception):
@@ -96,18 +97,54 @@ def _print_progress(downloaded: int, total: int | None) -> None:
 # --- Package zip ------------------------------------------------------------
 
 def fetch_package_zip(
-    name: str, dest: Path, progress: bool = False
+    name: str,
+    dest: Path,
+    progress: bool = False,
+    use_cache: bool = True,
+    cached_version: str | None = None,
 ) -> Path:
     """Download <name>.zip from the repo and extract it into *dest*.
 
     The zip contains the package folder contents (pis.toml + source files).
     Returns the path to the extracted package folder (dest/<name>/).
     Raises FetchError on download or zip errors.
+
+    If *use_cache* is True and *cached_version* is given, checks the cache
+    first. If a cached zip exists for that version, uses it instead of
+    downloading. After a successful download, the zip is stored in the cache.
     """
+    data = _fetch_zip_bytes(name, progress, use_cache, cached_version)
+    return _extract_zip_bytes(name, data, dest)
+
+
+def _fetch_zip_bytes(
+    name: str,
+    progress: bool = False,
+    use_cache: bool = True,
+    cached_version: str | None = None,
+) -> bytes:
+    """Fetch zip bytes for *name*, using cache if available."""
+    # check cache first
+    if use_cache and cached_version:
+        cached = get_cached(name, cached_version)
+        if cached:
+            print(f"  using cached {name}-{cached_version}.zip")
+            return cached.read_bytes()
+
+    # download
     url = raw_package_zip_url(name)
     cb = _print_progress if progress else None
     data = _download(url, progress=cb)
 
+    # store in cache if we know the version
+    if use_cache and cached_version:
+        set_cached(name, cached_version, data)
+
+    return data
+
+
+def _extract_zip_bytes(name: str, data: bytes, dest: Path) -> Path:
+    """Extract zip bytes into dest/<name>/. Returns the package dir path."""
     try:
         zf = zipfile.ZipFile(io.BytesIO(data))
     except zipfile.BadZipFile as exc:
@@ -117,12 +154,9 @@ def fetch_package_zip(
     pkg_dir.mkdir(parents=True, exist_ok=True)
 
     for member in zf.namelist():
-        # skip directory entries
         if member.endswith("/"):
             continue
-        # strip any leading folder (zip may contain <name>/ prefix or not)
         parts = member.split("/")
-        # if first part is the package name, strip it
         if parts and parts[0] == name:
             rel_parts = parts[1:]
         else:
@@ -136,9 +170,7 @@ def fetch_package_zip(
             dst.write(src.read())
 
     if not (pkg_dir / "pis.toml").is_file():
-        raise FetchError(
-            f"extracted zip for '{name}' has no pis.toml"
-        )
+        raise FetchError(f"extracted zip for '{name}' has no pis.toml")
     return pkg_dir
 
 

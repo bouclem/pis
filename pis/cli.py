@@ -1,7 +1,7 @@
 """pis command-line interface.
 
 Usage:
-    pis install <name> [--force] [--progress]
+    pis install <name> [--force] [--progress] [--no-cache]
     pis uninstall <name>
     pis list
     pis search [query]
@@ -10,7 +10,8 @@ Usage:
     pis build <name>
     pis init <name> [--description <desc>] [--no-build]
     pis run <pkg> <script>
-    pis --version
+    pis cache list|clear [name]
+    pis --version [--no-color]
 """
 
 from __future__ import annotations
@@ -19,8 +20,9 @@ import argparse
 import json
 import sys
 
-from pis import __version__
+from pis import __version__, colors
 from pis.builder import BuildError, build
+from pis.cacher import clear_cache, list_cache
 from pis.config import REGISTRY_FILE
 from pis.github import FetchError, NetworkError, NotFoundError
 from pis.info import InfoError, info
@@ -37,11 +39,7 @@ class RunError(Exception):
 
 
 def _run_script(pkg: str, script: str) -> int:
-    """Execute a declared script from an installed package.
-
-    Looks up the script in the installed registry, imports the target
-    module:function, and calls it.
-    """
+    """Execute a declared script from an installed package."""
     if not REGISTRY_FILE.is_file():
         raise RunError("no packages installed")
     try:
@@ -88,88 +86,72 @@ def build_parser() -> argparse.ArgumentParser:
         "-V", "--version", action="version",
         version=f"pis {__version__}",
     )
+    parser.add_argument(
+        "--no-color", action="store_true",
+        help="disable colored output",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     # install
-    p_install = sub.add_parser(
-        "install", help="install a package from the pis repo"
-    )
+    p_install = sub.add_parser("install", help="install a package from the pis repo")
     p_install.add_argument("name", help="package name")
-    p_install.add_argument(
-        "-f", "--force", action="store_true",
-        help="reinstall even if the same version is already installed",
-    )
-    p_install.add_argument(
-        "-p", "--progress", action="store_true",
-        help="show a download progress bar",
-    )
+    p_install.add_argument("-f", "--force", action="store_true",
+        help="reinstall even if the same version is already installed")
+    p_install.add_argument("-p", "--progress", action="store_true",
+        help="show a download progress bar")
+    p_install.add_argument("--no-cache", action="store_true",
+        help="skip cache and always download")
 
     # uninstall
-    p_uninstall = sub.add_parser(
-        "uninstall", help="remove an installed package"
-    )
+    p_uninstall = sub.add_parser("uninstall", help="remove an installed package")
     p_uninstall.add_argument("name", help="package name")
 
     # list
     sub.add_parser("list", help="list installed packages")
 
     # search
-    p_search = sub.add_parser(
-        "search", help="search available packages in the repo"
-    )
-    p_search.add_argument(
-        "query", nargs="?", default="",
-        help="search string (substring match); empty lists all",
-    )
+    p_search = sub.add_parser("search", help="search available packages in the repo")
+    p_search.add_argument("query", nargs="?", default="",
+        help="search string (substring match); empty lists all")
 
     # update
-    p_update = sub.add_parser(
-        "update", help="update a package (or all) to the latest repo version"
-    )
-    p_update.add_argument(
-        "name", nargs="?", help="package name (omit with --all for everything)"
-    )
-    p_update.add_argument(
-        "-a", "--all", action="store_true",
-        help="update all installed packages",
-    )
-    p_update.add_argument(
-        "-f", "--force", action="store_true",
-        help="reinstall even if the version is unchanged",
-    )
+    p_update = sub.add_parser("update",
+        help="update a package (or all) to the latest repo version")
+    p_update.add_argument("name", nargs="?",
+        help="package name (omit with --all for everything)")
+    p_update.add_argument("-a", "--all", action="store_true",
+        help="update all installed packages")
+    p_update.add_argument("-f", "--force", action="store_true",
+        help="reinstall even if the version is unchanged")
 
     # info
-    p_info = sub.add_parser(
-        "info", help="show a package's manifest details from the repo"
-    )
+    p_info = sub.add_parser("info",
+        help="show a package's manifest details from the repo")
     p_info.add_argument("name", help="package name")
 
     # build
-    p_build = sub.add_parser(
-        "build", help="build a package zip + update index.json (run in repo root)"
-    )
+    p_build = sub.add_parser("build",
+        help="build a package zip + update index.json (run in repo root)")
     p_build.add_argument("name", help="package name")
 
     # init
-    p_init = sub.add_parser(
-        "init", help="scaffold a new package folder + pis.toml"
-    )
+    p_init = sub.add_parser("init", help="scaffold a new package folder + pis.toml")
     p_init.add_argument("name", help="package name")
-    p_init.add_argument(
-        "-d", "--description", default="",
-        help="package description",
-    )
-    p_init.add_argument(
-        "--no-build", action="store_true",
-        help="skip the automatic build step",
-    )
+    p_init.add_argument("-d", "--description", default="", help="package description")
+    p_init.add_argument("--no-build", action="store_true",
+        help="skip the automatic build step")
 
     # run
-    p_run = sub.add_parser(
-        "run", help="run a script declared in an installed package"
-    )
+    p_run = sub.add_parser("run", help="run a script declared in an installed package")
     p_run.add_argument("pkg", help="package name")
     p_run.add_argument("script", help="script name (from [scripts] in pis.toml)")
+
+    # cache
+    p_cache = sub.add_parser("cache", help="manage the zip cache")
+    p_cache_sub = p_cache.add_subparsers(dest="cache_cmd", required=True)
+    p_cache_sub.add_parser("list", help="list cached zips")
+    p_cache_clear = p_cache_sub.add_parser("clear", help="clear cache")
+    p_cache_clear.add_argument("name", nargs="?", help="only clear cache for this package")
 
     return parser
 
@@ -178,9 +160,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
+    # init colors
+    colors.init(no_color=getattr(args, "no_color", False))
+
     try:
         if args.command == "install":
-            install(args.name, force=args.force, progress=args.progress)
+            install(args.name, force=args.force, progress=args.progress,
+                    use_cache=not args.no_cache)
         elif args.command == "uninstall":
             uninstall(args.name)
         elif args.command == "list":
@@ -202,7 +188,12 @@ def main(argv: list[str] | None = None) -> int:
             init(args.name, description=args.description, skip_build=args.no_build)
         elif args.command == "run":
             return _run_script(args.pkg, args.script)
-        else:  # pragma: no cover - argparse enforces required subcommand
+        elif args.command == "cache":
+            if args.cache_cmd == "list":
+                _cache_list()
+            elif args.cache_cmd == "clear":
+                _cache_clear(getattr(args, "name", None))
+        else:
             parser.print_help()
             return 1
         return 0
@@ -235,10 +226,32 @@ def main(argv: list[str] | None = None) -> int:
         return 130
 
 
+def _cache_list() -> None:
+    """List cached zips."""
+    entries = list_cache()
+    if not entries:
+        print(colors.dim("  cache is empty"))
+        return
+    print(colors.header(f"  {'Name':<20} {'Version':<12} {'Size'}"))
+    print("  " + "-" * 50)
+    for name, version, size in entries:
+        size_str = f"{size} bytes" if size < 1024 else f"{size // 1024} KB"
+        print(f"  {name:<20} {version:<12} {size_str}")
+    print(f"\n  {len(entries)} cached zip(s)")
+
+
+def _cache_clear(name: str | None) -> None:
+    """Clear cache."""
+    removed = clear_cache(name)
+    if removed:
+        print(colors.success(f"  cleared {removed} cached zip(s)"))
+    else:
+        print(colors.dim("  cache is empty"))
+
+
 def _print_error(cmd: str, exc: Exception) -> None:
     """Print a friendly error message, translating known fetch errors."""
     msg = str(exc)
-    # translate fetch sub-errors
     if isinstance(exc, (InstallError, SearchError, UpdateError, InfoError)):
         if isinstance(exc.__cause__, NotFoundError):
             pkg = _extract_pkg_name(exc)
@@ -248,14 +261,13 @@ def _print_error(cmd: str, exc: Exception) -> None:
                 msg = "requested resource not found in the repo"
         elif isinstance(exc.__cause__, NetworkError):
             msg = f"could not reach the repo (check your connection): {exc.__cause__}"
-    print(f"pis: {cmd} error: {msg}", file=sys.stderr)
+    print(colors.error(f"pis: {cmd} error: {msg}"), file=sys.stderr)
 
 
 def _extract_pkg_name(exc: Exception) -> str:
     """Try to extract a package name from an error message."""
-    msg = str(exc)
-    # common patterns: "package 'foo' not found", "not found: .../packages/foo/foo.zip"
     import re
+    msg = str(exc)
     m = re.search(r"packages/([^/]+)/", msg)
     if m:
         return m.group(1)

@@ -50,3 +50,18 @@ Add an entry whenever you learn something new.
   extensionless executable for Unix. Writing both is cheap and covers both.
 - `pis init` + `pis build` chained together makes scaffolding a new package
   a one-command operation. Good DX for a package manager.
+
+## 2026-09-12 — v0.0.5 (constraints, cache, colors, per-package changelog)
+- Version constraints are simpler than they look: parse with regex, compare
+  as tuples of ints split on dots. No need for a full semver library — KISS.
+  `>=`, `<=`, `==`, `>`, `<`, `!=` cover the common cases.
+- Cache key is `<name>-<version>.zip` — simple and collision-free since
+  version is unique per package. No need for hashes or content-addressing.
+- ANSI colors: check `sys.stdout.isatty()` and `NO_COLOR` env var. The
+  `no-color.org` convention is worth following — users expect it.
+- Per-package CHANGELOG.md keeps package history separate from the tool's
+  history. The builder includes it automatically since it's just a file in
+  the folder. `pis info` shows it if the package is installed locally.
+- Storing dependencies in the registry as formatted strings (e.g.
+  `"foo>=1.0"`) is simpler than serializing Dependency objects. Parse on
+  use, store as string.
