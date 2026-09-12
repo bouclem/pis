@@ -1,0 +1,9 @@
+[package]
+name = "girlfriend"
+version = "0.1.0"
+description = "you have no girlfriend. this package reminds you."
+dependencies = []
+
+[scripts]
+roast = "girlfriend:roast"
+rate = "girlfriend:rate"
