@@ -40,8 +40,14 @@ class RunError(Exception):
     pass
 
 
-def _run_script(pkg: str, script: str) -> int:
-    """Execute a declared script from an installed package."""
+def _run_script(pkg: str, script: str, extra: list[str] | None = None) -> int:
+    """Execute a declared script from an installed package.
+
+    Extra arguments are passed to the script via sys.argv so scripts can
+    check for flags like --force.
+    """
+    if extra:
+        sys.argv = [pkg] + extra
     if not REGISTRY_FILE.is_file():
         raise RunError("no packages installed")
     try:
@@ -151,6 +157,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_run = sub.add_parser("run", help="run a script declared in an installed package")
     p_run.add_argument("pkg", help="package name")
     p_run.add_argument("script", help="script name (from [scripts] in pis.toml)")
+    p_run.add_argument("extra", nargs=argparse.REMAINDER,
+        help="extra arguments passed to the script (e.g. --force)")
 
     # cache
     p_cache = sub.add_parser("cache", help="manage the zip cache")
@@ -197,7 +205,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "init":
             init(args.name, description=args.description, skip_build=args.no_build)
         elif args.command == "run":
-            return _run_script(args.pkg, args.script)
+            return _run_script(args.pkg, args.script, getattr(args, "extra", []))
         elif args.command == "cache":
             if args.cache_cmd == "list":
                 _cache_list()
