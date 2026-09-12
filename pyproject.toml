@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pis"
+version = "0.0.3"
+description = "Python Install Shit — a tiny pip alternative with an in-repo package store."
+readme = "docs/README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "bouclem" }]
+keywords = ["pip", "package-manager", "fun"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Build Tools",
+]
+dependencies = []
+
+[project.scripts]
+pis = "pis.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["pis*"]
+exclude = ["packages*"]
+
+[tool.setuptools.package-data]
+pis = []

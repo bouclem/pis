@@ -1,0 +1,90 @@
+# pis — Python Install Shit
+
+`pis` is a tiny `pip` alternative. Packages live **inside the pis repo itself**
+under `packages/<name>/`, and `pis install <name>` fetches them from there.
+
+> Mostly for fun. Some parts are genuinely useful. No custom user-uploaded
+> packages yet — only the built-in "pis thing" packages that ship in the repo.
+
+## Install pis itself
+
+```bash
+pip install -e .
+```
+
+Or just run it without installing:
+
+```bash
+python -m pis --help
+```
+
+## Commands
+
+```bash
+pis install <name>        # fetch & install a package from the repo
+pis install <name> -f     # force reinstall even if version matches
+pis install <name> -p     # show a download progress bar
+pis uninstall <name>      # remove an installed package
+pis list                  # list installed packages
+pis search [query]        # list available packages in the repo (substring filter)
+pis update <name>         # update a package to the latest repo version
+pis update --all          # update every installed package
+pis info <name>           # show a package's manifest details from the repo
+pis build <name>          # build a package zip + update index.json (run in repo root)
+pis --version
+```
+
+## How install works (no GitHub API)
+
+pis fetches packages via `raw.githubusercontent.com` — **zero GitHub API calls,
+no rate limits**. Each package folder contains a pre-built `<name>.zip`:
+
+1. `pis install <name>` downloads `packages/<name>/<name>.zip` via raw URL
+2. Extracts it, reads `pis.toml`, verifies checksums (if declared)
+3. Installs dependencies recursively, then the package itself
+4. Registers in `~/.pis/installed.json` and writes `pis.pth` for importability
+
+`pis search` reads `packages/index.json` via raw URL (also no API).
+
+`pis build <name>` (run in the repo root) creates the zip and updates
+`index.json` — run it before committing a new or updated package.
+
+## Where things live
+
+```
+~/.pis/
+  packages/        <- installed package folders
+  installed.json   <- registry of installed packages + metadata
+```
+
+A `pis.pth` file is also dropped into the user's site-packages so installed
+packages become importable from any Python session. If that fails (permissions),
+add `~/.pis/packages` to your `PYTHONPATH` manually.
+
+## Package format
+
+Each package is a folder under `packages/<name>/` containing a `pis.toml`:
+
+```toml
+[package]
+name = "hello"
+version = "0.1.0"
+description = "a tiny sample pis package"
+dependencies = []
+
+# Optional: verify file integrity after install
+[checksums]
+"hello.py" = "sha256hex..."
+```
+
+Plus whatever Python files make up the package, and a pre-built `<name>.zip`
+(created by `pis build <name>`).
+
+## Requirements
+
+- Python 3.11+ (uses `tomllib`; falls back to `tomli` if installed)
+- No third-party dependencies — stdlib only
+
+## License
+
+MIT
